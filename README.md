@@ -1,5 +1,6 @@
 This is a pure HTML5 playlist,
 specifically designed for theater work.
+I run it on a Chromebook.
 
 You give it a play list, and it cues them up,
 one at a time.
