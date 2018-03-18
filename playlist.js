@@ -1,3 +1,6 @@
+// HTML5 Playlist by Neale Pickett
+// https://github.com/nealey/playlst
+
 var base = ".";
 
 function loadTrack(e) {
