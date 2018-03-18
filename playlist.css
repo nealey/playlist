@@ -15,6 +15,14 @@ audio {
   font-family: "Roboto", "Droid Sans Mono", monospace;
 }
 
+#duration {
+  clear: both;
+  background-color: #001;
+  float: right;
+  font-size: 500%;
+  font-family: "Roboto", "Droid Sans Mono", monospace;
+}
+
 #controls {
   padding: 1em;
 }

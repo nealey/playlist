@@ -57,12 +57,18 @@ function mmss(s) {
   return mm + ":" + ss;
 }
 
+function durationchange(e) {
+  let duration = e.srcElement.duration;
+  
+  document.querySelector("#duration").textContent = mmss(duration);
+}
+
+
 function timeupdate(e) {
   let currentTime = e.srcElement.currentTime;
-  let duration = e.srcElement.duration;
   let tgt = document.querySelector("#currentTime");
-  
-  document.querySelector("#currentTime").textContent = mmss(currentTime);
+
+  tgt.textContent = mmss(currentTime);
   if (duration - currentTime < 20) {
     tgt.classList.add("fin");
   } else {
@@ -97,7 +103,7 @@ function midiMessage(e) {
   let data = e.data;
   let ctrl = data[1];
   let val = data[2];
-  if (data[0] == 176) {
+  if ((data[0] == 0xb0) || (data[0] == 0xbf)) {
     switch (ctrl) {
       case 0: // master volume slider
         audio.volume = val / 127;
@@ -130,6 +136,15 @@ function handleMidiAccess(access) {
   for (let input of access.inputs.values()) {
     input.addEventListener("midimessage", midiMessage);
   }
+  
+  for (let output of access.outputs.values()) {
+    if (output.name == "nanoKONTROL2 MIDI 1") {
+      controller = output;
+      output.send([0xf0, 0x42, 0x40, 0x00, 0x01, 0x13, 0x00, 0x00, 0x00, 0x01, 0xf7]); // Native Mode (lets us control LEDs, requires sysex privilege)
+      output.send([0xbf, 0x2a, 0x7f]); // Stop
+      output.send([0xbf, 0x29, 0x7f]); // Play
+    }
+  }
 }
 
 function run() {
@@ -143,6 +158,7 @@ function run() {
   document.querySelector("#next").addEventListener("click", next);
   audio.addEventListener("ended", ended);
   audio.addEventListener("timeupdate", timeupdate);
+  audio.addEventListener("durationchange", durationchange);
   for (let li of document.querySelectorAll("#playlist li")) {
     li.addEventListener("click", loadTrack);
   }
@@ -156,7 +172,7 @@ function run() {
   document.querySelector("#playlist li").classList.add("current");
   prev();
   
-  navigator.requestMIDIAccess().then(handleMidiAccess);
+  navigator.requestMIDIAccess({sysex: true}).then(handleMidiAccess);
 }
 
 window.addEventListener("load", run);
