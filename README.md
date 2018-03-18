@@ -23,4 +23,4 @@ You can have the same track more than once, if you want.
 Author
 ------
 
-Neale Pickett
+Neale Pickett <neale@woozle.org>
