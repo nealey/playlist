@@ -137,6 +137,9 @@ function midiMessage(e) {
         break
       case 41: // play button
         if (val == 127) {
+          // The first time, the browser will reject this,
+          // because it doesn't consider MIDI input user interaction,
+          // so it looks like an autoplaying video.
           audio.play()
         }
         break
