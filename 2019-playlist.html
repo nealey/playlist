@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- HTML5 Playlist by Neale Pickett -->
+<!-- https://github.com/nealey/playlist -->
+<html>
+  <head>
+    <title>2019 ROF</title>
+    <meta name="viewport" content="width=device-width">
+    <link href="playlist.css" rel="stylesheet">
+    <script src="playlist.js"></script>
+  </head>
+  <body>
+    <audio preload id="audio">
+      Your browser does not support HTML5 Audio!
+    </audio>
+    <input type="range" min="0" max="1" step="any" id="pos">
+    
+    <div id="currentTime"></div>
+    <div id="duration"></div>
+
+    <div id="controls">
+      <a id="prev">⏮</a>
+      <a id="next">⏭</a>
+
+      <input type="range" min="0.0" max="1.0" list="tickmarks" step="any" id="vol">
+      <datalist id="tickmarks">
+        <option value="0.0" label="0%">
+        <option value="0.5" label="50%">
+        <option value="1.0" label="100%">
+      </datalist>
+    </div>
+
+    <ul id="playlist">
+      <li>0-0 God.mp3</li>
+      <li>1 - 1 - Summer Set 1.mp3</li>
+      <li>1 - 1 - Summer Set 2.mp3</li>
+      <li>1 - 2 - Live Set</li>
+      <li>1 - 3 - Ole Irlanda.mp3</li>
+      <li>1 - 4 - Slip Jig.mp3</li>
+      <li>1 - 5 - El Son de la Negra.m4a</li>
+      <li>1 - 6 - Gweebarra.wav</li>
+      <li>----- Intermission -----</li>
+      <li>2 - 1 - Adventure of a Lifetime.m4a</li>
+      <li>2 - 2 - El Portorico de los Machetes.mp3</li>
+      <li>2 - 3 - Orange Rouge.wav</li>
+      <li>2 - 4 - Live Set</li>
+      <li>2 - 5 - Live Set</li>
+      <li>2 - 6 - Pink Panther.mp3</li>
+      <li>2 - 7 - Alegrias.wav</li>
+      <li>2 - 8 - Rock n Rince.mp3</li>
+      <li>2 - 9 - Finale 1.m4a</li>
+      <li>2 - 9 - Finale 2.mp3</li>
+    </ul>
+  </body>
+</html>

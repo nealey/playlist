@@ -8,6 +8,10 @@ audio {
   min-width: 40em;
 }
 
+#pos {
+  width: 100%;
+}
+
 #currentTime {
   background-color: #001;
   float: right;
