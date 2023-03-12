@@ -60,3 +60,7 @@ audio {
 .fin {
   animation: pulse 1s infinite;
 }
+
+.loading {
+  color: #555;
+} 

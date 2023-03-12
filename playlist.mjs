@@ -39,8 +39,7 @@ class Playlist {
     this.base = base
     this.list = {}
     this.current = null
-    this.startedAt = 0
-    this.pausedAt = 0
+    this.Stop()
   }
 
   /**
@@ -78,7 +77,7 @@ class Playlist {
     if (!duration) {
       return 0
     }
-    if (this.startedAt) {
+    if (this.Playing()) {
       pos = ctx.currentTime - this.startedAt
       pos = Math.min(pos, duration)
     }
@@ -96,7 +95,6 @@ class Playlist {
     this.source.connect(ctx.destination)
     this.source.start(0, offset)
     this.startedAt = ctx.currentTime - offset
-    this.pausedAt = 0
   }
 
   Pause() {
@@ -111,11 +109,19 @@ class Playlist {
       this.source.stop()
     }
     this.pausedAt = 0
-    this.startedAt = 0
+    this.startedAt = -1
+  }
+
+  Playing() {
+    if (this.startedAt > -1) {
+      let pos = ctx.currentTime - this.startedAt
+      return pos < this.Duration()
+    }
+    return false
   }
 
   PlayPause() {
-    if (this.startedAt) {
+    if (this.Playing()) {
       this.Pause()
     } else {
       this.Play()
@@ -123,16 +129,16 @@ class Playlist {
   }
 
   Seek(pos) {
-    if (this.startedAt) {
-      this.play(pos)
+    if (this.Playing()) {
+      this.Play(pos)
     } else {
       this.pausedAt = this.Duration() * pos
     }
   }
 
   CurrentTime() {
-    if (this.startedAt) {
-      return ctx.currentTime - this.startedAt
+    if (this.Playing()) {
+      return Math.min(ctx.currentTime - this.startedAt, this.Duration())
     }
     if (this.pausedAt) {
       return this.pausedAt
@@ -319,8 +325,12 @@ function run() {
   audio.addEventListener("ended", ended)
   audio.addEventListener("volumechange", volumechange)
   for (let li of document.querySelectorAll("#playlist li")) {
-    playlist.Add(li.textContent)
+    li.classList.add("loading")
     li.addEventListener("click", loadTrack)
+    playlist.Add(li.textContent)
+    .then(() => {
+      li.classList.remove("loading")
+    })
   }
 
   setInterval(() => timeupdate(), 250 * Millisecond)
