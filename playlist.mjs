@@ -8,20 +8,27 @@ class Track {
   constructor() {
     this.startedAt = 0
     this.pausedAt = 0
-    console.log(this)
     window.track = this
   }
 
-  async load(url) {
+  async Load(url) {
     this.filename = url.split("/").pop()
     let resp = await fetch(url)
-    let buf = await resp.arrayBuffer()
-    this.abuf = await ctx.decodeAudioData(buf)
+    if (resp.ok) {
+      let buf = await resp.arrayBuffer()
+      this.abuf = await ctx.decodeAudioData(buf)
+    } else {
+      let options = {
+        length: 1,
+        sampleRate: 3000,
+      }
+      this.abuf = new AudioBuffer(options)
+    }
   }
 
   Duration() {
     if (this.abuf) {
-      return this.abuf.duration * Second
+      return this.abuf.duration
     }
     return 0
   }
@@ -36,45 +43,69 @@ class Playlist {
     this.pausedAt = 0
   }
 
-  async add(filename) {
+  /**
+   * Preload a track
+   * 
+   * @param {String} filename 
+   * @returns {Track}
+   */
+  async Add(filename) {
     let track = new Track()
     this.list[filename] = track
-    await track.load(`${this.base}/${filename}`)
+    await track.Load(`${this.base}/${filename}`)
     return track
   }
 
-  async load(filename) {
-    this.stop()
+  /**
+   * Load a track by filename
+   * 
+   * @param {String} filename 
+   */
+  async Load(filename) {
+    this.Stop()
     this.current = this.list[filename]
     if (!this.current) {
       this.current = await this.add(filename)
     }
   }
 
-  play(pos=null) {
-    let offset = this.pausedAt / Second
+  /**
+   * Returns current position as a percentage (0.0-1.0)
+   */
+  Position() {
+    let duration = this.Duration()
+    let pos = 0
+    if (!duration) {
+      return 0
+    }
+    if (this.startedAt) {
+      pos = ctx.currentTime - this.startedAt
+      pos = Math.min(pos, duration)
+    }
+    return pos / duration
+  }
+
+  Play(pos=null) {
+    let offset = this.pausedAt
     if (pos) {
       offset = this.current.abuf.duration * pos
     }
-    if (this.startedAt) {
-      this.stop()
-    }
-    console.log(offset)
+    this.Stop()
     this.source = new AudioBufferSourceNode(ctx)
     this.source.buffer = this.current.abuf
     this.source.connect(ctx.destination)
     this.source.start(0, offset)
-    this.startedAt = (ctx.currentTime - offset) * Second
+    this.startedAt = ctx.currentTime - offset
     this.pausedAt = 0
   }
 
-  pause() {
+  Pause() {
     let pos = this.CurrentTime()
-    this.stop()
+    this.Stop()
     this.pausedAt = pos
   }
 
-  stop() {
+  Stop() {
     if (this.source) {
       this.source.disconnect()
       this.source.stop()
@@ -84,11 +115,10 @@ class Playlist {
   }
 
   PlayPause() {
-    console.log("Play/Pause")
     if (this.startedAt) {
-      this.pause()
+      this.Pause()
     } else {
-      this.play()
+      this.Play()
     }
   }
 
@@ -102,7 +132,7 @@ class Playlist {
 
   CurrentTime() {
     if (this.startedAt) {
-      return ctx.currentTime*Second - this.startedAt
+      return ctx.currentTime - this.startedAt
     }
     if (this.pausedAt) {
       return this.pausedAt
@@ -121,7 +151,7 @@ window.playlist = playlist
 async function loadTrack(e) {
   let li = e.target
 
-  playlist.load(li.textContent)
+  playlist.Load(li.textContent)
   
   // Update "current"
   for (let cur of document.querySelectorAll(".current")) {
@@ -177,8 +207,8 @@ function volumechange(e) {
 
 
 function timeupdate() {
-  let currentTime = playlist.CurrentTime()
-  let duration = playlist.Duration()
+  let currentTime = playlist.CurrentTime() * Second
+  let duration = playlist.Duration() * Second
   let tgt = document.querySelector("#currentTime")
   let pos = document.querySelector("#pos")
 
@@ -238,12 +268,12 @@ function midiMessage(e) {
           // The first time, the browser will reject this,
           // because it doesn't consider MIDI input user interaction,
           // so it looks like an autoplaying video.
-          audio.play()
+          playlist.Play()
         }
         break
       case 42: // stop button
         if (val == 127) {
-          audio.pause()
+          playlist.Pause()
         }
         break
       case 58: // prev button
@@ -289,7 +319,7 @@ function run() {
   audio.addEventListener("ended", ended)
   audio.addEventListener("volumechange", volumechange)
   for (let li of document.querySelectorAll("#playlist li")) {
-    playlist.add(li.textContent)
+    playlist.Add(li.textContent)
     li.addEventListener("click", loadTrack)
   }
 
