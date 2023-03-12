@@ -1,16 +1,127 @@
-// jshint asi:true
+let ctx = new AudioContext()
 
-// HTML5 Playlist by Neale Pickett
-// https://github.com/nealey/playlst
+const Millisecond = 1
+const Second = 1000 * Millisecond
+const Minute = 60 * Second
 
+class Track {
+  constructor() {
+    this.startedAt = 0
+    this.pausedAt = 0
+    console.log(this)
+    window.track = this
+  }
 
-var base = "."
+  async load(url) {
+    this.filename = url.split("/").pop()
+    let resp = await fetch(url)
+    let buf = await resp.arrayBuffer()
+    this.abuf = await ctx.decodeAudioData(buf)
+  }
 
-function loadTrack(e) {
+  Duration() {
+    if (this.abuf) {
+      return this.abuf.duration * Second
+    }
+    return 0
+  }
+}
+
+class Playlist {
+  constructor(base="./music") {
+    this.base = base
+    this.list = {}
+    this.current = null
+    this.startedAt = 0
+    this.pausedAt = 0
+  }
+
+  async add(filename) {
+    let track = new Track()
+    this.list[filename] = track
+    await track.load(`${this.base}/${filename}`)
+    return track
+  }
+
+  async load(filename) {
+    this.stop()
+    this.current = this.list[filename]
+    if (!this.current) {
+      this.current = await this.add(filename)
+    }
+  }
+
+  play(pos=null) {
+    let offset = this.pausedAt / Second
+    if (pos) {
+      offset = this.current.abuf.duration * pos
+    }
+    if (this.startedAt) {
+      this.stop()
+    }
+    console.log(offset)
+    this.source = new AudioBufferSourceNode(ctx)
+    this.source.buffer = this.current.abuf
+    this.source.connect(ctx.destination)
+    this.source.start(0, offset)
+    this.startedAt = (ctx.currentTime - offset) * Second
+    this.pausedAt = 0
+  }
+
+  pause() {
+    let pos = this.CurrentTime()
+    this.stop()
+    this.pausedAt = pos
+  }
+
+  stop() {
+    if (this.source) {
+      this.source.disconnect()
+      this.source.stop()
+    }
+    this.pausedAt = 0
+    this.startedAt = 0
+  }
+
+  PlayPause() {
+    console.log("Play/Pause")
+    if (this.startedAt) {
+      this.pause()
+    } else {
+      this.play()
+    }
+  }
+
+  Seek(pos) {
+    if (this.startedAt) {
+      this.play(pos)
+    } else {
+      this.pausedAt = this.Duration() * pos
+    }
+  }
+
+  CurrentTime() {
+    if (this.startedAt) {
+      return ctx.currentTime*Second - this.startedAt
+    }
+    if (this.pausedAt) {
+      return this.pausedAt
+    }
+    return 0
+  }
+
+  Duration() {
+    return this.current.Duration()
+  }
+}
+
+let playlist = new Playlist()
+window.playlist = playlist
+
+async function loadTrack(e) {
   let li = e.target
-  let audio = document.querySelector("#audio")
-  audio.src = base + "/" + li.textContent
-  audio.load()
+
+  playlist.load(li.textContent)
   
   // Update "current"
   for (let cur of document.querySelectorAll(".current")) {
@@ -50,9 +161,9 @@ function ended() {
   next()
 }
 
-function mmss(s) {
-  let mm = Math.floor(s / 60)
-  let ss = Math.floor(s % 60)
+function mmss(duration) {
+  let mm = Math.floor(duration / Minute)
+  let ss = Math.floor((duration / Second) % 60)
   
   if (ss < 10) {
     ss = "0" + ss
@@ -60,28 +171,21 @@ function mmss(s) {
   return mm + ":" + ss
 }
 
-function durationchange(e) {
-  let duration = e.target.duration
-  
-  document.querySelector("#duration").textContent = mmss(duration)
-  timeupdate(e)
-}
-
 function volumechange(e) {
   document.querySelector("#vol").value = e.target.volume
 }
 
 
-function timeupdate(e) {
-  let currentTime = e.target.currentTime
-  let duration = e.target.duration || 1
+function timeupdate() {
+  let currentTime = playlist.CurrentTime()
+  let duration = playlist.Duration()
   let tgt = document.querySelector("#currentTime")
   let pos = document.querySelector("#pos")
 
   pos.value = currentTime / duration
 
   tgt.textContent = mmss(currentTime)
-  if (duration - currentTime < 20) {
+  if (duration - currentTime < 20 * Second) {
     tgt.classList.add("fin")
   } else {
     tgt.classList.remove("fin")
@@ -90,9 +194,7 @@ function timeupdate(e) {
 
 function setPos(e) {
   let val = e.target.value
-  let audio = document.querySelector("#audio")
-
-  audio.currentTime = audio.duration * val
+  playlist.Seek(val)
 }
 
 function setGain(e) {
@@ -105,13 +207,9 @@ function setGain(e) {
 function keydown(e) {
   let audio = document.querySelector("#audio")
 
-  switch (event.key) {
+  switch (e.key) {
     case " ": // space bar
-      if (audio.paused) {
-        audio.play()
-      } else {
-        audio.pause()
-      }
+      playlist.PlayPause()
       break
       
     case "ArrowDown": // Next track
@@ -189,12 +287,13 @@ function run() {
   document.querySelector("#pos").addEventListener("input", setPos)
   document.querySelector("#vol").addEventListener("input", setGain)
   audio.addEventListener("ended", ended)
-  audio.addEventListener("timeupdate", timeupdate)
-  audio.addEventListener("durationchange", durationchange)
   audio.addEventListener("volumechange", volumechange)
   for (let li of document.querySelectorAll("#playlist li")) {
+    playlist.add(li.textContent)
     li.addEventListener("click", loadTrack)
   }
+
+  setInterval(() => timeupdate(), 250 * Millisecond)
   
   document.querySelector("#vol").value = audio.volume
   

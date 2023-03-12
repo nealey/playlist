@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- HTML5 Playlist by Neale Pickett -->
+<!-- https://github.com/nealey/playlist -->
+<html>
+  <head>
+    <title>ROF 2023-A</title>
+    <meta name="viewport" content="width=device-width">
+    <link href="playlist.css" rel="stylesheet">
+    <script src="playlist.mjs" type="module"></script>
+  </head>
+  <body>
+    <audio preload id="audio">
+      Your browser does not support HTML5 Audio!
+    </audio>
+    <input type="range" min="0.0" max="1.0" list="audiopos" step="any" id="pos">
+    <datalist id="audiopos">
+      <option value="0.1"></option>
+      <option value="0.2"></option>
+      <option value="0.3"></option>
+      <option value="0.4"></option>
+      <option value="0.5"></option>
+      <option value="0.6"></option>
+      <option value="0.7"></option>
+      <option value="0.8"></option>
+      <option value="0.9"></option>
+    </datalist>
+    
+    <div id="currentTime"></div>
+    <div id="duration"></div>
+
+    <div id="controls">
+      <a id="prev">⏮</a>
+      <a id="next">⏭</a>
+
+      <input type="range" min="0.0" max="1.0" list="tickmarks" step="any" id="vol">
+      <datalist id="tickmarks">
+        <option value="0.0" label="0%">
+        <option value="0.5" label="50%">
+        <option value="1.0" label="100%">
+      </datalist>
+    </div>
+
+    <ol id="playlist">
+      <li value=0>0-0 God.mp3</li>
+      <li>01 Drums of Belfast.m4a</li>
+      <li>04 The Jura Wedding Reels.m4a</li>
+      <li>07 Geantraí.mp3</li>
+      <li>15 The Sweets of May (Ceili).mp3</li>
+      <li>Ni Liom Fein - 121.mp3</li>
+      <li>--- Maria ---</li>
+      <li>--- St Patrick's Day---</li>
+      <li>2-05 Wellerman – Sea Shanty.m4a</li>
+      <li>01 Boogie Woogie Bugle Boy.m4a</li>
+      <li>Amsterdam Blues Extra A Original.mp3</li>
+      <li value=0>----- Intermission -----</li>
+      <li value=1>2 - 1 - Adventure of a Lifetime.m4a</li>
+      <li>2 - 2 - El Portorico de los Machetes.mp3</li>
+      <li>2 - 3 - Orange Rouge.wav</li>
+      <li>2 - 4 - Live Set</li>
+      <li>2 - 5 - Live Set</li>
+      <li>2 - 6 - Pink Panther.mp3</li>
+      <li>2 - 7 - Alegrias.wav</li>
+      <li>2 - 8 - Rock n Rince.mp3</li>
+      <li>2 - 9 - Finale 1.m4a</li>
+      <li>2 - 9 - Finale 2.mp3</li>
+    </ol>
+  </body>
+</html>
