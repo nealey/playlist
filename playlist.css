@@ -19,7 +19,7 @@ audio {
   font-family: "Roboto", "Droid Sans Mono", monospace;
 }
 
-#duration {
+#remainingTime {
   clear: both;
   background-color: #001;
   float: right;
@@ -36,6 +36,7 @@ audio {
 }
 
 #playlist {
+  font-size: 150%;
   width: auto;
 }
 

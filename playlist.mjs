@@ -215,17 +215,19 @@ function volumechange(e) {
 function timeupdate() {
   let currentTime = playlist.CurrentTime() * Second
   let duration = playlist.Duration() * Second
-  let tgt = document.querySelector("#currentTime")
+  let cur = document.querySelector("#currentTime")
+  let remain = document.querySelector("#remainingTime")
   let pos = document.querySelector("#pos")
 
   pos.value = currentTime / duration
 
-  tgt.textContent = mmss(currentTime)
+  cur.textContent = mmss(currentTime)
   if (duration - currentTime < 20 * Second) {
-    tgt.classList.add("fin")
+    cur.classList.add("fin")
   } else {
-    tgt.classList.remove("fin")
+    cur.classList.remove("fin")
   }
+  remain.textContent = mmss(duration - currentTime)
 }
 
 function setPos(e) {
