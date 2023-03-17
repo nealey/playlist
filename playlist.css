@@ -38,6 +38,7 @@ audio {
 #playlist {
   font-size: 150%;
   width: auto;
+  cursor: pointer;
 }
 
 .current {

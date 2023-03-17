@@ -6,7 +6,7 @@ const Minute = 60 * Second
 
 class Track {
   constructor() {
-    this.startedAt = 0
+    this.startedAt = false
     this.pausedAt = 0
     window.track = this
   }
@@ -39,6 +39,8 @@ class Playlist {
     this.base = base
     this.list = {}
     this.current = null
+    this.gain = new GainNode(ctx)
+    this.gain.connect(ctx.destination)
     this.Stop()
   }
 
@@ -92,7 +94,7 @@ class Playlist {
     this.Stop()
     this.source = new AudioBufferSourceNode(ctx)
     this.source.buffer = this.current.abuf
-    this.source.connect(ctx.destination)
+    this.source.connect(this.gain)
     this.source.start(0, offset)
     this.startedAt = ctx.currentTime - offset
   }
@@ -109,13 +111,21 @@ class Playlist {
       this.source.stop()
     }
     this.pausedAt = 0
-    this.startedAt = -1
+    this.startedAt = false
   }
 
   Playing() {
-    if (this.startedAt > -1) {
+    if (this.startedAt !== false) {
       let pos = ctx.currentTime - this.startedAt
       return pos < this.Duration()
+    }
+    return false
+  }
+
+  Ended() {
+    if (this.startedAt !== false) {
+      let pos = ctx.currentTime - this.startedAt
+      return pos > this.Duration()
     }
     return false
   }
@@ -148,6 +158,10 @@ class Playlist {
 
   Duration() {
     return this.current.Duration()
+  }
+
+  SetGain(value) {
+    this.gain.gain.value = value
   }
 }
 
@@ -184,6 +198,16 @@ function prev() {
   clickOn(cur)
 }
 
+function play() {
+  if (!playlist.Playing()) {
+    playlist.Play()
+  }
+}
+
+function pause() {
+  playlist.Pause()
+}
+
 function next() {
   let cur = document.querySelector(".current")
   let next = cur.nextElementSibling
@@ -191,10 +215,6 @@ function next() {
     cur = next
   }
   clickOn(cur)
-}
-
-function ended() {
-  next()
 }
 
 function mmss(duration) {
@@ -207,12 +227,8 @@ function mmss(duration) {
   return mm + ":" + ss
 }
 
-function volumechange(e) {
-  document.querySelector("#vol").value = e.target.volume
-}
 
-
-function timeupdate() {
+function update() {
   let currentTime = playlist.CurrentTime() * Second
   let duration = playlist.Duration() * Second
   let cur = document.querySelector("#currentTime")
@@ -221,13 +237,17 @@ function timeupdate() {
 
   pos.value = currentTime / duration
 
+  if (playlist.Ended()) {
+    next()
+  }
+
   cur.textContent = mmss(currentTime)
   if (duration - currentTime < 20 * Second) {
     cur.classList.add("fin")
   } else {
     cur.classList.remove("fin")
   }
-  remain.textContent = mmss(duration - currentTime)
+  remain.textContent = "-" + mmss(duration - currentTime)
 }
 
 function setPos(e) {
@@ -237,9 +257,7 @@ function setPos(e) {
 
 function setGain(e) {
   let val = e.target.value
-  let audio = document.querySelector("#audio")
-  
-  audio.volume = val
+  playlist.SetGain(val)
 }
 
 function keydown(e) {
@@ -268,15 +286,14 @@ function midiMessage(e) {
   if ((data[0] == 0xb0) || (data[0] == 0xbf)) {
     switch (ctrl) {
       case 0: // master volume slider
+        let volumeSlider = document.querySelector("#vol")
         audio.volume = val / 127
-        document.querySelector("#vol").value = audio.volume
+        volumeSlider.value = audio.volume
+        volumeSlider.dispatchEvent(new Event("input"))
         break
       case 41: // play button
         if (val == 127) {
-          // The first time, the browser will reject this,
-          // because it doesn't consider MIDI input user interaction,
-          // so it looks like an autoplaying video.
-          playlist.Play()
+          play()
         }
         break
       case 42: // stop button
@@ -305,27 +322,24 @@ function handleMidiAccess(access) {
   
   for (let output of access.outputs.values()) {
     if (output.name == "nanoKONTROL2 MIDI 1") {
-      controller = output
       output.send([0xf0, 0x42, 0x40, 0x00, 0x01, 0x13, 0x00, 0x00, 0x00, 0x01, 0xf7]); // Native Mode (lets us control LEDs, requires sysex privilege)
-      output.send([0xbf, 0x2a, 0x7f]); // Stop
-      output.send([0xbf, 0x29, 0x7f]); // Play
+      output.send([0xbf, 0x20, 0x7f]); // S0 LED on
+      output.send([0xbf, 0x29, 0x7f]); // Play LED on
     }
   }
 }
 
-function run() {
-  let audio = document.querySelector("#audio")
-  
+function run() {  
   // Set up events:
   // - Prev/Next buttons
   // - ended / timeupdate events on audio
   // - Track items
   document.querySelector("#prev").addEventListener("click", prev)
+  document.querySelector("#pause").addEventListener("click", pause)
+  document.querySelector("#play").addEventListener("click", play)
   document.querySelector("#next").addEventListener("click", next)
   document.querySelector("#pos").addEventListener("input", setPos)
   document.querySelector("#vol").addEventListener("input", setGain)
-  audio.addEventListener("ended", ended)
-  audio.addEventListener("volumechange", volumechange)
   for (let li of document.querySelectorAll("#playlist li")) {
     li.classList.add("loading")
     li.addEventListener("click", loadTrack)
@@ -335,7 +349,7 @@ function run() {
     })
   }
 
-  setInterval(() => timeupdate(), 250 * Millisecond)
+  setInterval(() => update(), 250 * Millisecond)
   
   document.querySelector("#vol").value = audio.volume
   
