@@ -65,9 +65,6 @@ class Playlist {
   async Load(filename) {
     this.Stop()
     this.current = this.list[filename]
-    if (!this.current) {
-      this.current = await this.add(filename)
-    }
   }
 
   /**
@@ -171,7 +168,7 @@ window.playlist = playlist
 async function loadTrack(e) {
   let li = e.target
 
-  playlist.Load(li.textContent)
+  playlist.Load(li.dataset.filename || li.textContent)
   
   // Update "current"
   for (let cur of document.querySelectorAll(".current")) {
@@ -275,7 +272,11 @@ function keydown(e) {
     case "ArrowUp": // Previous track
       prev()
       break
+
+    default:
+      return
   }
+  e.preventDefault()
 }
 
 function midiMessage(e) {
@@ -343,7 +344,9 @@ function run() {
   for (let li of document.querySelectorAll("#playlist li")) {
     li.classList.add("loading")
     li.addEventListener("click", loadTrack)
-    playlist.Add(li.textContent)
+
+    let filename = li.dataset.filename || li.textContent
+    playlist.Add(filename)
     .then(() => {
       li.classList.remove("loading")
     })

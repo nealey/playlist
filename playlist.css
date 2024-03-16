@@ -33,10 +33,11 @@ audio {
 #controls a {
   font-size: 200%;
   padding: 0.5em;
+  cursor: default;
 }
 
 #playlist {
-  font-size: 150%;
+  font-size: 130%;
   width: auto;
   cursor: pointer;
 }
