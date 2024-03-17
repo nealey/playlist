@@ -23,7 +23,7 @@ audio {
   clear: both;
   background-color: #001;
   float: right;
-  font-size: 500%;
+  font-size: 1000%;
   font-family: "Roboto", "Droid Sans Mono", monospace;
 }
 
@@ -33,7 +33,7 @@ audio {
 #controls a {
   font-size: 200%;
   padding: 0.5em;
-  cursor: default;
+  cursor: pointer;
 }
 
 #playlist {
